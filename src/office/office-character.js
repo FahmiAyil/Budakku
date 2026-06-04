@@ -102,6 +102,14 @@ var officeCharacters = {
           officeRenderer.spawnEffect('warning', char.x, char.y - 65);
         }
       }
+
+      if (typeof notificationSound !== 'undefined') {
+        if (newState === 'done') {
+          notificationSound.playDoneSound();
+        } else if (newState === 'help') {
+          notificationSound.playPermissionSound();
+        }
+      }
     }
 
     this._setBubble(char, agentData);

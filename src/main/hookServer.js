@@ -94,7 +94,7 @@ function startHookServer({ processHookEvent, debugLog, HOOK_SERVER_PORT, errorHa
   });
 
   server.on('error', (e) => debugLog(`[Hook] Server error: ${e.message}`));
-  server.listen(HOOK_SERVER_PORT, '127.0.0.1', () => {
+  server.listen(HOOK_SERVER_PORT, '0.0.0.0', () => {
     debugLog(`[Hook] HTTP hook server listening on port ${HOOK_SERVER_PORT}`);
   });
 

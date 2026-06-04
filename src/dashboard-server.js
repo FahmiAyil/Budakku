@@ -9,7 +9,7 @@ const path = require('path');
 const { URL } = require('url');
 const { adaptAgentToDashboard } = require('./dashboardAdapter');
 
-const PORT = 3000;
+const PORT = 4123;
 const HTML_FILE = path.join(__dirname, '..', 'dashboard.html');
 
 // MIME type mapping

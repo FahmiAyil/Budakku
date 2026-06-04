@@ -9,7 +9,24 @@ const fs = require('fs');
 
 const sessionPids = new Map(); // sessionId → actual claude process PID
 
-async function checkLivenessTier1(agentId, pid) {
+function isWsl2Agent(agent) {
+  // WSL2 transcript paths are Linux absolute paths (start with /)
+  return typeof agent.jsonlPath === 'string' && agent.jsonlPath.startsWith('/');
+}
+
+async function checkWsl2ProcessAlive(pid) {
+  const { spawnSync } = require('child_process');
+  const r = spawnSync('wsl', ['-e', 'bash', '-c', `kill -0 ${pid} 2>/dev/null && echo alive || echo dead`], {
+    encoding: 'utf8',
+    timeout: 3000
+  });
+  return !r.error && r.status === 0 && r.stdout.trim() === 'alive';
+}
+
+async function checkLivenessTier1(agentId, pid, agent) {
+  if (agent && isWsl2Agent(agent)) {
+    return checkWsl2ProcessAlive(pid);
+  }
   try {
     process.kill(pid, 0);
     return true;
@@ -36,6 +53,18 @@ function detectClaudePidByTranscript(jsonlPath, callback) {
     : jsonlPath;
 
   if (process.platform === 'win32') {
+    // WSL2 transcript paths start with / — use wsl lsof instead of Windows lsof
+    if (resolved.startsWith('/')) {
+      const { spawnSync } = require('child_process');
+      const r = spawnSync('wsl', ['-e', 'bash', '-c', `lsof -t "${resolved}" 2>/dev/null`], {
+        encoding: 'utf8', timeout: 5000
+      });
+      if (!r.error && r.stdout) {
+        const pids = r.stdout.trim().split('\n').map(p => parseInt(p.trim(), 10)).filter(p => !isNaN(p) && p > 0);
+        if (pids.length > 0) return callback(pids[0]);
+      }
+      return detectClaudePidsFallback(callback);
+    }
     const scriptPath = path.join(__dirname, '..', 'find-file-owner.ps1');
     execFile('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', scriptPath, '-FilePath', resolved],
       { timeout: 5000 }, (err, stdout) => {
@@ -138,13 +167,16 @@ function getJsonlMtime(jsonlPath) {
 }
 
 // Zombie sweep: compare process count vs main agent count, remove oldest by mtime
+// WSL2 agents are excluded — their liveness is managed by the per-agent checkWsl2ProcessAlive check.
 let _zombieSweepRunning = false;
 function zombieSweep(agentManager, debugLog) {
   if (_zombieSweepRunning) return;
   _zombieSweepRunning = true;
 
-  const mainAgents = agentManager.getAllAgents().filter(a => !a.isSubagent);
-  const mainCount = mainAgents.length;
+  const allMain = agentManager.getAllAgents().filter(a => !a.isSubagent);
+  // Only Windows agents participate in the Windows process count comparison
+  const windowsAgents = allMain.filter(a => !isWsl2Agent(a));
+  const mainCount = windowsAgents.length;
   if (mainCount <= 1) { _zombieSweepRunning = false; return; }
 
   countClaudeProcesses((processCount) => {
@@ -152,10 +184,10 @@ function zombieSweep(agentManager, debugLog) {
     if (processCount >= mainCount) return; // no excess avatars
 
     const excess = mainCount - processCount;
-    debugLog(`[Live] Zombie sweep: ${processCount} processes, ${mainCount} agents → ${excess} excess`);
+    debugLog(`[Live] Zombie sweep: ${processCount} processes, ${mainCount} Windows agents → ${excess} excess`);
 
     // Sort by jsonl mtime ascending (oldest first)
-    const sorted = mainAgents
+    const sorted = windowsAgents
       .map(a => ({ agent: a, mtime: getJsonlMtime(a.jsonlPath) }))
       .sort((a, b) => a.mtime - b.mtime);
 
@@ -171,7 +203,6 @@ function zombieSweep(agentManager, debugLog) {
 const LIVENESS_INTERVAL = 2000;
 const GRACE_MS = 10000;
 const ZOMBIE_SWEEP_INTERVAL = 30000;
-const NO_PID_TIMEOUT = GRACE_MS + 10000;
 
 function startLivenessChecker({ agentManager, debugLog }) {
   const zombieSweepId = setInterval(() => {
@@ -184,22 +215,10 @@ function startLivenessChecker({ agentManager, debugLog }) {
       if (agent.firstSeen && (Date.now() - agent.firstSeen) < GRACE_MS) continue;
 
       const pid = sessionPids.get(agent.id);
-      if (!pid) {
-        retryPidDetection(agent.id, agentManager, debugLog);
-        const noPidAge = Date.now() - (agent.firstSeen || 0);
-        if (noPidAge > NO_PID_TIMEOUT) {
-          // Solo agent protection: don't remove the only agent
-          if (agentManager.getAgentCount() <= 1) {
-            debugLog(`[Live] ${agent.id.slice(0, 8)} no PID but solo agent → keeping`);
-            continue;
-          }
-          debugLog(`[Live] ${agent.id.slice(0, 8)} no PID for ${Math.round(noPidAge/1000)}s → removing`);
-          agentManager.removeAgent(agent.id);
-        }
-        continue;
-      }
+      // No PID — skip removal, rely on SessionEnd hook to clean up
+      if (!pid) continue;
 
-      const alive = await checkLivenessTier1(agent.id, pid);
+      const alive = await checkLivenessTier1(agent.id, pid, agent);
       if (alive) {
         if (agent.state === 'Offline') {
           agentManager.updateAgent({ ...agent, state: 'Waiting' }, 'live');

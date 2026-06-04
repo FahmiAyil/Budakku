@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Multi-Agent Manager
  * - P2-10: Only emit events on state changes
  * - Display name improvement: use cwd basename when slug is absent
@@ -228,7 +228,7 @@ class AgentManager extends EventEmitter {
   /**
    * Determine display name
    * 1. slug (e.g., "toasty-sparking-lecun" → "Toasty Sparking Lecun")
-   * 2. basename of projectPath (e.g., "pixel-agent-desk-master")
+   * 2. basename of projectPath (e.g., "budakku-master")
    * 3. Fallback: "Agent"
    */
   formatDisplayName(slug, projectPath) {

@@ -1,12 +1,12 @@
-/**
+﻿/**
  * Dashboard Data Adapter
- * Converts Pixel Agent Desk agent format to Dashboard format
+ * Converts Budakku agent format to Dashboard format
  */
 
 const path = require('path');
 
 /**
- * State mapping from Pixel Agent Desk to Dashboard
+ * State mapping from Budakku to Dashboard
  */
 const STATE_MAP = {
   'Working': 'working',
@@ -23,8 +23,8 @@ const STATE_MAP = {
 const DEFAULT_STATE = 'idle';
 
 /**
- * Map Pixel Agent Desk state to Dashboard state
- * @param {string} pixelState - Pixel Agent Desk state
+ * Map Budakku state to Dashboard state
+ * @param {string} pixelState - Budakku state
  * @returns {string} Dashboard state
  */
 function mapPixelStateToDashboardState(pixelState) {
@@ -44,7 +44,7 @@ function extractProjectName(projectPath) {
 
 /**
  * Determine agent type based on properties
- * @param {Object} agent - Pixel Agent Desk agent object
+ * @param {Object} agent - Budakku agent object
  * @returns {string} Agent type: 'main', 'subagent', or 'teammate'
  */
 function determineAgentType(agent) {
@@ -55,7 +55,7 @@ function determineAgentType(agent) {
 
 /**
  * Calculate elapsed time for an agent
- * @param {Object} agent - Pixel Agent Desk agent object
+ * @param {Object} agent - Budakku agent object
  * @returns {number} Elapsed time in milliseconds
  */
 function calculateElapsedTime(agent) {
@@ -73,8 +73,8 @@ function isAgentActive(state) {
 }
 
 /**
- * Adapt a single Pixel Agent Desk agent to Dashboard format
- * @param {Object} pixelAgent - Pixel Agent Desk agent object
+ * Adapt a single Budakku agent to Dashboard format
+ * @param {Object} pixelAgent - Budakku agent object
  * @returns {Object} Dashboard formatted agent
  */
 function adaptAgentToDashboard(pixelAgent) {
@@ -99,7 +99,7 @@ function adaptAgentToDashboard(pixelAgent) {
       teammateName: pixelAgent.teammateName || null,
       teamName: pixelAgent.teamName || null,
       endReason: pixelAgent.endReason || null,
-      source: 'pixel-agent-desk'
+      source: 'budakku'
     },
     timing: {
       elapsed: calculateElapsedTime(pixelAgent),

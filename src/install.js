@@ -1,5 +1,5 @@
-/**
- * Pixel Agent Desk - Auto Installation Script
+﻿/**
+ * Budakku - Auto Installation Script
  *
  * Automatically registers HTTP hooks in the Claude CLI config.
  * Runs automatically during npm install.
@@ -14,7 +14,7 @@ const { registerClaudeHooks } = require('./main/hookRegistration');
  */
 function main() {
   console.log('=================================');
-  console.log('Pixel Agent Desk - Install Script');
+  console.log('Budakku - Install Script');
   console.log('=================================\n');
 
   const debugLog = (msg) => console.log(msg);

@@ -1,5 +1,5 @@
-/**
- * Shared Utilities for Pixel Agent Desk
+﻿/**
+ * Shared Utilities for Budakku
  * Eliminates code duplication across modules
  */
 

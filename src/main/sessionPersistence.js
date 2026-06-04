@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Session Persistence
  * state.json save/restore — recover active sessions on app restart
  */
@@ -9,7 +9,7 @@ const fs = require('fs');
 const { execFileSync } = require('child_process');
 
 function getPersistedStatePath() {
-  return path.join(os.homedir(), '.pixel-agent-desk', 'state.json');
+  return path.join(os.homedir(), '.budakku', 'state.json');
 }
 
 /**

@@ -1,9 +1,10 @@
-/**
- * Pixel Agent Desk — Main Process Orchestrator
+﻿/**
+ * Budakku — Main Process Orchestrator
  * Module initialization, event wiring, and app lifecycle management
  */
 
 const { app, BrowserWindow, ipcMain, Menu } = require('electron');
+app.setName('Budakku');
 const path = require('path');
 const fs = require('fs');
 
@@ -15,6 +16,7 @@ const errorHandler = require('./errorHandler');
 const { getWindowSizeForAgents } = require('./utils');
 
 const { HOOK_SERVER_PORT, registerClaudeHooks } = require('./main/hookRegistration');
+const { registerWsl2Hooks } = require('./main/wsl2Registration');
 const { startHookServer } = require('./main/hookServer');
 const { createHookProcessor } = require('./main/hookProcessor');
 const { sessionPids, startLivenessChecker, detectClaudePidByTranscript } = require('./main/livenessChecker');
@@ -72,6 +74,7 @@ app.commandLine.appendSwitch('high-dpi-support', '1');
 app.commandLine.appendSwitch('force-device-scale-factor', '1');
 app.commandLine.appendSwitch('disable-logging');
 app.commandLine.appendSwitch('log-level', '3');
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 process.env.ELECTRON_DISABLE_LOGGING = '1';
 
 // =====================================================
@@ -86,7 +89,7 @@ let livenessIntervals = null;
 let agentListeners = null;
 
 app.whenReady().then(() => {
-  debugLog('========== Pixel Agent Desk started ==========');
+  debugLog('========== Budakku started ==========');
 
   // Minimal application menu (removes default File/Edit/Window/Help clutter)
   const isDev = process.argv.includes('--dev');
@@ -114,8 +117,11 @@ app.whenReady().then(() => {
   ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate));
 
-  // 0. Auto-register Claude CLI hooks
+  // 0. Auto-register Claude CLI hooks (Windows + WSL2)
   registerClaudeHooks(debugLog);
+  // Run WSL2 registration in background — it involves spawning wsl processes
+  // which can take a moment and shouldn't delay the main window from appearing
+  setImmediate(() => registerWsl2Hooks(debugLog, HOOK_SERVER_PORT));
 
   // 1. Start agent manager immediately
   agentManager = new AgentManager();
@@ -211,14 +217,30 @@ app.whenReady().then(() => {
       }
     }
 
+    const agentPrevStates = new Map();
+
+    function sendSound(type) {
+      const mw = windowManager.mainWindow;
+      if (mw && !mw.isDestroyed()) mw.webContents.send('play-sound', type);
+    }
+
     agentListeners = {
       onAdded: (agent) => {
         broadcast('agent-added', 'dashboard-agent-added', agent, adaptAgentToDashboard(agent));
+        agentPrevStates.set(agent.id, agent.state);
       },
       onUpdated: (agent) => {
+        const prev = agentPrevStates.get(agent.id);
+        const curr = agent.state;
+        agentPrevStates.set(agent.id, curr);
+        if (prev !== curr) {
+          if (curr === 'Done') sendSound('done');
+          else if (curr === 'Help') sendSound('permission');
+        }
         broadcast('agent-updated', 'dashboard-agent-updated', agent, adaptAgentToDashboard(agent));
       },
       onRemoved: (data) => {
+        agentPrevStates.delete(data.id);
         broadcast('agent-removed', 'dashboard-agent-removed', data);
         closeDashboardIfEmpty();
       },

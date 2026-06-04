@@ -1,4 +1,4 @@
-/**
+﻿/**
  * HeatmapScanner Tests
  * JSONL scanning, daily aggregation, incremental scanning, persistence tests
  */
@@ -19,7 +19,7 @@ const originalHomedir = os.homedir;
 beforeEach(() => {
   tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'heatmap-test-'));
   projectsDir = path.join(tmpDir, '.claude', 'projects', 'test-project');
-  persistDir = path.join(tmpDir, '.pixel-agent-desk');
+  persistDir = path.join(tmpDir, '.budakku');
   fs.mkdirSync(projectsDir, { recursive: true });
 
   // Mock homedir to tmpDir
@@ -243,7 +243,7 @@ describe('HeatmapScanner', () => {
       await scanner1.scanAll();
 
       // Verify persistence
-      const persistFile = path.join(tmpDir, '.pixel-agent-desk', 'heatmap.json');
+      const persistFile = path.join(tmpDir, '.budakku', 'heatmap.json');
       expect(fs.existsSync(persistFile)).toBe(true);
 
       // Restore with a new instance
@@ -263,7 +263,7 @@ describe('HeatmapScanner', () => {
       const scanner = new HeatmapScanner();
       await scanner.scanAll();
 
-      const persistFile = path.join(tmpDir, '.pixel-agent-desk', 'heatmap.json');
+      const persistFile = path.join(tmpDir, '.budakku', 'heatmap.json');
       const data = JSON.parse(fs.readFileSync(persistFile, 'utf-8'));
 
       // _sessions and _projects Sets should be excluded from serialization

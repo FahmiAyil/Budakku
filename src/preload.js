@@ -25,6 +25,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onAgentRemoved: (cb) => safeOn('agent-removed', cb),
   onAgentsCleaned: (cb) => safeOn('agents-cleaned', cb),
 
+  // Sound events
+  onPlaySound: (cb) => safeOn('play-sound', cb),
+
   // Error events
   onErrorOccurred: (cb) => safeOn('error-occurred', cb),
 

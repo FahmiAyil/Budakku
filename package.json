@@ -1,7 +1,7 @@
 {
-  "name": "pixel-agent-desk",
+  "name": "budakku",
   "version": "2.0.0",
-  "description": "Visualize multi-agent Claude CLI sessions as pixel avatars in real time",
+  "description": "Budakku",
   "main": "src/main.js",
   "scripts": {
     "postinstall": "node src/install.js",
@@ -27,16 +27,17 @@
     "multi-agent",
     "jsonl"
   ],
-  "author": "Mgpixelart",
-  "homepage": "https://github.com/Mgpixelart/pixel-agent-desk",
+  "author": "Budakku",
+  "homepage": "https://github.com/Budakku/budakku",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Mgpixelart/pixel-agent-desk.git"
+    "url": "https://github.com/Budakku/budakku.git"
   },
   "license": "MIT",
   "build": {
-    "appId": "com.mgpixelart.pixel-agent-desk",
-    "productName": "Pixel Agent Desk",
+    "appId": "com.budakku.app",
+    "productName": "Budakku",
+    "icon": "public/budakku_logo.png",
     "directories": {
       "output": "release"
     },

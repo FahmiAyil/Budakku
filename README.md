@@ -1,12 +1,12 @@
-# Pixel Agent Desk
+﻿# Budakku
 
-[![CI](https://github.com/Mgpixelart/pixel-agent-desk/actions/workflows/test.yml/badge.svg)](https://github.com/Mgpixelart/pixel-agent-desk/actions/workflows/test.yml)
+[![CI](https://github.com/Budakku/budakku/actions/workflows/test.yml/badge.svg)](https://github.com/Budakku/budakku/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Electron](https://img.shields.io/badge/Electron-32+-47848F?logo=electron&logoColor=white)](https://www.electronjs.org/)
 
 > Real-time pixel avatar visualization for Claude Code CLI multi-agent sessions.
 
-Pixel Agent Desk is a standalone Electron app that listens to [Claude Code](https://docs.anthropic.com/en/docs/claude-code) hook events and renders each agent session as an animated pixel character — complete with a virtual office, activity heatmaps, and token usage analytics.
+Budakku is a standalone Electron app that listens to [Claude Code](https://docs.anthropic.com/en/docs/claude-code) hook events and renders each agent session as an animated pixel character — complete with a virtual office, activity heatmaps, and token usage analytics.
 
 ![Demo](docs/demo.gif)
 
@@ -36,8 +36,8 @@ Pixel Agent Desk is a standalone Electron app that listens to [Claude Code](http
 ## Quick Start
 
 ```bash
-git clone https://github.com/Mgpixelart/pixel-agent-desk.git
-cd pixel-agent-desk
+git clone https://github.com/Budakku/budakku.git
+cd budakku
 npm install
 npm start
 ```

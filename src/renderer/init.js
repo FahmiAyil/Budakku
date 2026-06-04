@@ -56,6 +56,14 @@ async function init() {
     window.electronAPI.onErrorOccurred(createErrorUI);
   }
 
+  if (window.electronAPI.onPlaySound) {
+    window.electronAPI.onPlaySound((type) => {
+      if (typeof notificationSound === 'undefined') return;
+      if (type === 'done') notificationSound.playDoneSound();
+      else if (type === 'permission') notificationSound.playPermissionSound();
+    });
+  }
+
   // Load existing agents
   try {
     const agents = await window.electronAPI.getAllAgents();

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Demo Simulation Script
  * Sends fake hook events to populate the office with agents for GIF recording.
  *
@@ -35,7 +35,7 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 // ─── Agent Scenarios ───
 
 const agents = [
-  { id: 'demo-agent-01', cwd: '/projects/pixel-agent-desk',  model: 'claude-opus-4-6',    scenario: 'long'    },
+  { id: 'demo-agent-01', cwd: '/projects/budakku',  model: 'claude-opus-4-6',    scenario: 'long'    },
   { id: 'demo-agent-02', cwd: '/projects/web-app',           model: 'claude-sonnet-4-6',  scenario: 'long'    },
   { id: 'demo-agent-03', cwd: '/projects/api-server',        model: 'claude-sonnet-4-6',  scenario: 'medium'  },
   { id: 'demo-agent-04', cwd: '/projects/ml-pipeline',       model: 'claude-haiku-4-5',   scenario: 'medium'  },
@@ -52,8 +52,8 @@ const agents = [
 // ─── Subagents (spawned mid-run inside parent sessions) ───
 // Each: { parentId, id, cwd, agent_type, spawnAfterMs, durationMs }
 const subagents = [
-  { parentId: 'demo-agent-01', id: 'demo-sub-01a', cwd: '/projects/pixel-agent-desk', agent_type: 'research',  spawnAfterMs: 8000,  durationMs: 18000 },
-  { parentId: 'demo-agent-01', id: 'demo-sub-01b', cwd: '/projects/pixel-agent-desk', agent_type: 'edit',      spawnAfterMs: 15000, durationMs: 12000 },
+  { parentId: 'demo-agent-01', id: 'demo-sub-01a', cwd: '/projects/budakku', agent_type: 'research',  spawnAfterMs: 8000,  durationMs: 18000 },
+  { parentId: 'demo-agent-01', id: 'demo-sub-01b', cwd: '/projects/budakku', agent_type: 'edit',      spawnAfterMs: 15000, durationMs: 12000 },
   { parentId: 'demo-agent-02', id: 'demo-sub-02a', cwd: '/projects/web-app',          agent_type: 'research',  spawnAfterMs: 6000,  durationMs: 17000 },
   { parentId: 'demo-agent-07', id: 'demo-sub-07a', cwd: '/projects/backend-api',      agent_type: 'test',      spawnAfterMs: 10000, durationMs: 15000 },
 ];

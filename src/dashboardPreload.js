@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Dashboard Dashboard Preload Script
  * Provides secure IPC bridge for Dashboard window
  */
@@ -45,7 +45,7 @@ contextBridge.exposeInMainWorld('dashboardAPI', {
     return () => ipcRenderer.removeListener('dashboard-agent-removed', listener);
   },
 
-  // Send commands to Pixel Agent Desk
+  // Send commands to Budakku
   focusAgent: (agentId) => {
     ipcRenderer.send('dashboard-focus-agent', agentId);
   },

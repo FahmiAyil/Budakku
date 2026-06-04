@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Heatmap Scanner
  * Scans JSONL transcripts under ~/.claude/projects/ to aggregate
  * daily activity statistics (sessions, messages, tool usage, tokens, cost).
@@ -24,7 +24,7 @@ class HeatmapScanner {
     this.scanInterval = null;
 
     /** Persistence path (uses homedir at instance creation time) */
-    this.persistDir = path.join(os.homedir(), '.pixel-agent-desk');
+    this.persistDir = path.join(os.homedir(), '.budakku');
     this.persistFile = path.join(this.persistDir, 'heatmap.json');
 
     /** @type {Record<string, DayStats>} "YYYY-MM-DD" → statistics */

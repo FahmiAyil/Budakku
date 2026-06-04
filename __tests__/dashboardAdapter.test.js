@@ -1,4 +1,4 @@
-/**
+﻿/**
  * dashboardAdapter.js Tests
  * State mapping, project extraction, agent type, timing, full adaptation
  */
@@ -78,7 +78,7 @@ describe('dashboardAdapter', () => {
       expect(result.avatarIndex).toBe(2);
       expect(result.metadata.isSubagent).toBe(false);
       expect(result.metadata.permissionMode).toBe('default');
-      expect(result.metadata.source).toBe('pixel-agent-desk');
+      expect(result.metadata.source).toBe('budakku');
       expect(result.timing.elapsed).toBeGreaterThan(0);
       expect(result.timing.active).toBe(true);
     });

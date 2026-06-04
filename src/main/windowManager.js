@@ -1,9 +1,9 @@
-/**
+﻿/**
  * Window Manager
  * Main window, dashboard window, keep-alive, resize, dashboard server management
  */
 
-const { BrowserWindow, screen, shell } = require('electron');
+const { BrowserWindow, screen, shell, Tray, Menu, nativeImage, app } = require('electron');
 const path = require('path');
 
 function createWindowManager({ agentManager, sessionScanner, heatmapScanner, debugLog, adaptAgentToDashboard, errorHandler, getWindowSizeForAgents }) {
@@ -12,6 +12,7 @@ function createWindowManager({ agentManager, sessionScanner, heatmapScanner, deb
   let pipWindow = null;
   let keepAliveInterval = null;
   let dashboardServer = null;
+  let tray = null;
 
   function resizeWindowForAgents(agentsOrCount) {
     if (!mainWindow || mainWindow.isDestroyed()) return;
@@ -81,15 +82,63 @@ function createWindowManager({ agentManager, sessionScanner, heatmapScanner, deb
       }
     });
 
-    // Main window (avatar) closed -> close dashboard and quit app
-    mainWindow.on('closed', () => {
-      mainWindow = null;
-      closeDashboardWindow();
-      const { app } = require('electron');
-      app.quit();
+    // Minimize to tray on close instead of quitting
+    mainWindow.on('close', (e) => {
+      if (tray) {
+        e.preventDefault();
+        mainWindow.hide();
+      }
     });
 
     startKeepAlive();
+    setupTray();
+  }
+
+  function setupTray() {
+    if (tray) return;
+    const iconPath = path.join(app.getAppPath(), 'public', 'budakku_logo.png');
+    const icon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 });
+    tray = new Tray(icon);
+    tray.setToolTip('Budakku');
+
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: 'Show / Hide',
+        click: () => {
+          if (!mainWindow || mainWindow.isDestroyed()) return;
+          if (mainWindow.isVisible()) {
+            mainWindow.hide();
+          } else {
+            mainWindow.show();
+            mainWindow.setAlwaysOnTop(true, 'screen-saver');
+          }
+        }
+      },
+      {
+        label: 'Open Dashboard',
+        click: () => {
+          if (dashboardWindow && !dashboardWindow.isDestroyed()) {
+            dashboardWindow.focus();
+          }
+        }
+      },
+      { type: 'separator' },
+      {
+        label: 'Quit Budakku',
+        click: () => { app.quit(); }
+      }
+    ]);
+
+    tray.setContextMenu(contextMenu);
+    tray.on('click', () => {
+      if (!mainWindow || mainWindow.isDestroyed()) return;
+      if (mainWindow.isVisible()) {
+        mainWindow.hide();
+      } else {
+        mainWindow.show();
+        mainWindow.setAlwaysOnTop(true, 'screen-saver');
+      }
+    });
   }
 
   function startKeepAlive() {
@@ -134,7 +183,7 @@ function createWindowManager({ agentManager, sessionScanner, heatmapScanner, deb
         height: dashH,
         x: Math.floor((width - dashW) / 2),
         y: Math.floor((height - dashH) / 2),
-        title: 'Pixel Agent Desk',
+        title: 'Budakku',
         backgroundColor: '#ffffff',
         webPreferences: {
           nodeIntegration: false,
@@ -145,7 +194,7 @@ function createWindowManager({ agentManager, sessionScanner, heatmapScanner, deb
       });
 
       // Load via HTTP server (instead of file://) — needed for serving office module static files
-      dashboardWindow.loadURL('http://localhost:3000/');
+      dashboardWindow.loadURL('http://localhost:4123/');
 
       dashboardWindow.webContents.setWindowOpenHandler(({ url }) => {
         shell.openExternal(url);
@@ -233,7 +282,7 @@ function createWindowManager({ agentManager, sessionScanner, heatmapScanner, deb
       debugLog('[PiP] Window shown');
     });
 
-    pipWindow.loadURL('http://localhost:3000/pip');
+    pipWindow.loadURL('http://localhost:4123/pip');
 
     pipWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
       debugLog(`[PiP] Failed to load: ${errorCode} - ${errorDescription}`);
@@ -296,7 +345,7 @@ function createWindowManager({ agentManager, sessionScanner, heatmapScanner, deb
 
       dashboardServer = serverModule.startServer();
 
-      debugLog('[Dashboard] Server started (port 3000)');
+      debugLog('[Dashboard] Server started (port 4123)');
     } catch (error) {
       debugLog(`[Dashboard] Failed to start: ${error.message}`);
     }
