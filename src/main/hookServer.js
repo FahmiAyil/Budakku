@@ -8,6 +8,8 @@ const Ajv = require('ajv');
 
 const MAX_BODY_SIZE = 1024 * 1024; // 1MB
 
+const pendingPermissions = new Map(); // sessionId → { res, timer }
+
 function startHookServer({ processHookEvent, debugLog, HOOK_SERVER_PORT, errorHandler }) {
   // JSON Schema for hook validation
   const hookSchema = {
@@ -67,20 +69,39 @@ function startHookServer({ processHookEvent, debugLog, HOOK_SERVER_PORT, errorHa
       }
     });
     req.on('end', () => {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ ok: true }));
-
       try {
         const data = JSON.parse(body);
         debugLog(`[Hook] ← ${data.hook_event_name || '?'} session=${(data.session_id || '').slice(0, 8) || '?'} _pid=${data._pid} _timestamp=${data._timestamp}`);
 
-        // Validate JSON schema
         const isValid = validateHook(data);
         if (!isValid) {
           debugLog(`[Hook] Validation FAILED for ${data.hook_event_name}: ${JSON.stringify(validateHook.errors)}`);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ ok: true }));
           return;
         }
 
+        // PermissionRequest: hold response open until user decides
+        if (data.hook_event_name === 'PermissionRequest' && data.session_id) {
+          const stale = pendingPermissions.get(data.session_id);
+          if (stale) { clearTimeout(stale.timer); }
+
+          const timer = setTimeout(() => {
+            if (!res.writableEnded) {
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ decision: 'allow' }));
+            }
+            pendingPermissions.delete(data.session_id);
+          }, 300000);
+
+          pendingPermissions.set(data.session_id, { res, timer });
+          debugLog(`[Hook] PermissionRequest held for user input: ${data.session_id.slice(0, 8)}`);
+          processHookEvent(data);
+          return;
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
         processHookEvent(data);
       } catch (e) {
         errorHandler.capture(e, {
@@ -89,6 +110,7 @@ function startHookServer({ processHookEvent, debugLog, HOOK_SERVER_PORT, errorHa
           severity: 'WARNING'
         });
         debugLog(`[Hook] Parse error: ${e.message}`);
+        if (!res.writableEnded) { res.writeHead(200); res.end(JSON.stringify({ ok: true })); }
       }
     });
   });
@@ -101,4 +123,4 @@ function startHookServer({ processHookEvent, debugLog, HOOK_SERVER_PORT, errorHa
   return server;
 }
 
-module.exports = { startHookServer };
+module.exports = { startHookServer, pendingPermissions };

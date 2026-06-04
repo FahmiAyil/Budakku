@@ -47,6 +47,7 @@
       "styles.css",
       "index.html",
       "dashboard.html",
+      "permissionPopup.html",
       "package.json"
     ],
     "win": {

@@ -177,6 +177,15 @@ export function updateAgent(agent) {
   const card = document.querySelector(`[data-agent-id="${agent.id}"]`);
   if (!card) return;
 
+  // Remove permission options when agent moves away from Help state
+  if (prevData && prevData.state === 'Help' && agent.state !== 'Help') {
+    if (card._permStash) {
+      card.querySelector('.perm-options')?.remove();
+      card._permStash = null;
+      window.electronAPI.restoreFromPermission?.();
+    }
+  }
+
   // Detect agent type change (e.g., Main created via auto-create then switched to Sub via SubagentStart)
   const wasSubagent = card.classList.contains('is-subagent');
   const wasTeammate = card.classList.contains('is-teammate');

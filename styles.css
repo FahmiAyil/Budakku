@@ -1180,3 +1180,37 @@ html {
     transform: scale(0.8) translateY(8px);
   }
 }
+
+/* ════════════════════════════════════════
+   Permission Bubbles — 3 separate speech bubbles above character
+════════════════════════════════════════ */
+.perm-options {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+/* Each option reuses .agent-bubble styling — override drag region and add interactivity */
+.agent-bubble.perm-opt {
+  -webkit-app-region: no-drag;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.1s, filter 0.1s;
+  width: auto;
+  min-width: unset;
+  max-width: unset;
+  padding: 3px 6px;
+  font-size: 10px;
+}
+
+.agent-bubble.perm-opt:hover  { transform: scale(1.06); filter: brightness(0.95); }
+.agent-bubble.perm-opt:active { transform: scale(0.96); }
+
+/* "Allow always" uses violet/blue border (no existing helper class for this) */
+.perm-bubble-always {
+  border-color: #6366f1;
+  color: #4338ca;
+}
+.perm-bubble-always::after { border-top-color: #6366f1; }

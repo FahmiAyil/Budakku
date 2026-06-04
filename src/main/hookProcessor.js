@@ -52,7 +52,23 @@ function handlePidReconnect({ agentManager, sessionPids, sessionId, data, debugL
   });
 }
 
-function createHookProcessor({ agentManager, sessionPids, debugLog, detectClaudePidByTranscript }) {
+function inferPermissionOptions(toolName) {
+  const multiOptionTools = ['Bash', 'computer', 'str_replace_editor', 'Write', 'Edit', 'MultiEdit', 'notebook_edit'];
+  return multiOptionTools.includes(toolName)
+    ? ['Allow', 'Allow always', 'Deny']
+    : ['Allow', 'Deny'];
+}
+
+function summarizeToolInput(toolName, toolInput) {
+  if (!toolInput) return '';
+  if (toolName === 'Bash' && toolInput.command) return toolInput.command;
+  if (toolInput.file_path) return toolInput.file_path;
+  if (toolInput.path) return toolInput.path;
+  const first = Object.values(toolInput)[0];
+  return typeof first === 'string' ? first : JSON.stringify(toolInput).slice(0, 120);
+}
+
+function createHookProcessor({ agentManager, sessionPids, debugLog, detectClaudePidByTranscript, onPermissionRequest }) {
   // Internal state
   const pendingSessionStarts = [];
   const firstPreToolUseDone = new Map(); // sessionId -> boolean
@@ -185,6 +201,14 @@ function createHookProcessor({ agentManager, sessionPids, debugLog, detectClaude
         if (agentManager) {
           const agent = agentManager.getAgent(sessionId);
           if (agent) agentManager.updateAgent({ ...agent, sessionId, state: 'Help', currentTool: data.tool_name || null }, 'hook');
+        }
+        if (onPermissionRequest) {
+          onPermissionRequest({
+            sessionId,
+            toolName: data.tool_name || 'Permission',
+            summary: summarizeToolInput(data.tool_name, data.tool_input),
+            options: inferPermissionOptions(data.tool_name),
+          });
         }
         break;
 

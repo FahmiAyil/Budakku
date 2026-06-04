@@ -14,6 +14,7 @@ function createWindowManager({ agentManager, sessionScanner, heatmapScanner, deb
   let dashboardServer = null;
   let tray = null;
   let isQuitting = false;
+  const permissionWindows = new Map(); // sessionId → BrowserWindow
 
   function resizeWindowForAgents(agentsOrCount) {
     if (!mainWindow || mainWindow.isDestroyed()) return;
@@ -374,6 +375,67 @@ function createWindowManager({ agentManager, sessionScanner, heatmapScanner, deb
     }
   }
 
+  function createPermissionWindow(data) {
+    const { sessionId, toolName, summary, options } = data;
+
+    // Close existing popup for this session
+    closePermissionWindow(sessionId);
+
+    const { width: sw, height: sh } = screen.getPrimaryDisplay().workAreaSize;
+    const mainBounds = (mainWindow && !mainWindow.isDestroyed())
+      ? mainWindow.getBounds()
+      : { x: Math.round(sw / 2), y: Math.round(sh / 2), width: 80, height: 200 };
+
+    const popupW = 220;
+    const popupH = 90 + (options.length * 42);
+
+    // Prefer right of main window; fall back to left
+    let px = mainBounds.x + mainBounds.width + 12;
+    if (px + popupW > sw) px = mainBounds.x - popupW - 12;
+    let py = mainBounds.y;
+    if (py + popupH > sh) py = sh - popupH - 10;
+    py = Math.max(4, py);
+
+    const win = new BrowserWindow({
+      width: popupW,
+      height: popupH,
+      x: px,
+      y: py,
+      transparent: true,
+      frame: false,
+      hasShadow: false,
+      alwaysOnTop: true,
+      skipTaskbar: true,
+      resizable: false,
+      movable: false,
+      focusable: true,
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+      }
+    });
+
+    win.setAlwaysOnTop(true, 'screen-saver');
+
+    win.loadFile(path.join(app.getAppPath(), 'permissionPopup.html'), {
+      query: {
+        toolName: toolName || 'Permission',
+        summary: summary || '',
+        options: JSON.stringify(options || ['Allow', 'Deny']),
+      }
+    });
+
+    permissionWindows.set(sessionId, win);
+    win.on('closed', () => permissionWindows.delete(sessionId));
+    debugLog(`[Permission] Popup shown for ${sessionId.slice(0, 8)}`);
+  }
+
+  function closePermissionWindow(sessionId) {
+    const win = permissionWindows.get(sessionId);
+    if (win && !win.isDestroyed()) win.close();
+    permissionWindows.delete(sessionId);
+  }
+
   return {
     get mainWindow() { return mainWindow; },
     get dashboardWindow() { return dashboardWindow; },
@@ -389,6 +451,8 @@ function createWindowManager({ agentManager, sessionScanner, heatmapScanner, deb
     startDashboardServer,
     stopDashboardServer,
     resizeWindowForAgents,
+    createPermissionWindow,
+    closePermissionWindow,
   };
 }
 

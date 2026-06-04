@@ -17,7 +17,7 @@ const { getWindowSizeForAgents } = require('./utils');
 
 const { HOOK_SERVER_PORT, registerClaudeHooks } = require('./main/hookRegistration');
 const { registerWsl2Hooks } = require('./main/wsl2Registration');
-const { startHookServer } = require('./main/hookServer');
+const { startHookServer, pendingPermissions } = require('./main/hookServer');
 const { createHookProcessor } = require('./main/hookProcessor');
 const { sessionPids, startLivenessChecker, detectClaudePidByTranscript } = require('./main/livenessChecker');
 const { savePersistedState, recoverExistingSessions } = require('./main/sessionPersistence');
@@ -141,6 +141,10 @@ app.whenReady().then(() => {
     sessionPids,
     debugLog,
     detectClaudePidByTranscript,
+    onPermissionRequest: (data) => {
+      const mw = windowManager && windowManager.mainWindow;
+      if (mw && !mw.isDestroyed()) mw.webContents.send('show-permission-popup', data);
+    },
   });
 
   // 4. Create window manager
@@ -162,6 +166,7 @@ app.whenReady().then(() => {
     debugLog,
     adaptAgentToDashboard,
     errorHandler,
+    pendingPermissions,
   });
 
   // 6. Start background services
@@ -236,6 +241,11 @@ app.whenReady().then(() => {
         if (prev !== curr) {
           if (curr === 'Done') sendSound('done');
           else if (curr === 'Help') sendSound('permission');
+          else if (prev === 'Help') {
+            windowManager.closePermissionWindow(agent.id);
+            const mw = windowManager.mainWindow;
+            if (mw && !mw.isDestroyed()) mw.webContents.send('hide-permission-popup', { sessionId: agent.id });
+          }
         }
         broadcast('agent-updated', 'dashboard-agent-updated', agent, adaptAgentToDashboard(agent));
       },

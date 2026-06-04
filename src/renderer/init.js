@@ -64,6 +64,13 @@ async function init() {
     });
   }
 
+  if (window.electronAPI.onShowPermissionPopup) {
+    window.electronAPI.onShowPermissionPopup((data) => showPermissionBubble(data));
+  }
+  if (window.electronAPI.onHidePermissionPopup) {
+    window.electronAPI.onHidePermissionPopup((data) => restorePermissionBubble(data.sessionId));
+  }
+
   // Load existing agents
   try {
     const agents = await window.electronAPI.getAllAgents();
@@ -78,6 +85,62 @@ async function init() {
   }
 
   window.electronAPI.rendererReady();
+}
+
+// --- Permission Bubble — 3 separate clickable speech bubbles above character ---
+function permBorderClass(opt) {
+  const l = opt.toLowerCase();
+  if (l === 'deny' || l === 'no') return 'is-alert';
+  if (l.includes('always') || l.includes('session')) return 'perm-bubble-always';
+  return 'is-complete';
+}
+
+function showPermissionBubble(data) {
+  const card = document.querySelector(`[data-agent-id="${data.sessionId}"]`);
+  if (!card) return;
+  const bubble = card.querySelector('.agent-bubble');
+  if (!bubble) return;
+
+  // Mark card as showing permission options
+  card._permStash = true;
+  const optCount = (data.options || ['Allow', 'Deny']).length;
+  window.electronAPI.expandForPermission?.(optCount * 30 + 10);
+
+  // Remove any existing option container
+  card.querySelector('.perm-options')?.remove();
+
+  const container = document.createElement('div');
+  container.className = 'perm-options';
+  container.style.webkitAppRegion = 'no-drag';
+  container.style.pointerEvents = 'auto';
+
+  (data.options || ['Allow', 'Deny']).forEach((opt) => {
+    const btn = document.createElement('button');
+    btn.className = 'agent-bubble perm-opt ' + permBorderClass(opt);
+    btn.textContent = opt;
+    btn.style.webkitAppRegion = 'no-drag';
+    btn.style.pointerEvents = 'auto';
+    btn.style.cursor = 'pointer';
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const decision = (opt.toLowerCase() === 'deny' || opt.toLowerCase() === 'no') ? 'deny' : 'allow';
+      window.electronAPI.sendPermissionDecision?.(data.sessionId, decision);
+      restorePermissionBubble(data.sessionId);
+    });
+    container.appendChild(btn);
+  });
+
+  // Insert above the project name tag
+  const typeTag = card.querySelector('.type-tag');
+  card.insertBefore(container, typeTag || bubble);
+}
+
+function restorePermissionBubble(sessionId) {
+  const card = document.querySelector(`[data-agent-id="${sessionId}"]`);
+  if (!card) return;
+  card.querySelector('.perm-options')?.remove();
+  card._permStash = null;
+  window.electronAPI.restoreFromPermission?.();
 }
 
 // --- Visibility handling ---

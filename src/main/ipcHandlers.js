@@ -69,7 +69,7 @@ if ($hwnd -ne [IntPtr]::Zero) {
   }
 }
 
-function registerIpcHandlers({ agentManager, sessionPids, windowManager, debugLog, adaptAgentToDashboard, errorHandler }) {
+function registerIpcHandlers({ agentManager, sessionPids, windowManager, debugLog, adaptAgentToDashboard, errorHandler, pendingPermissions }) {
   ipcMain.on('resize-window', (e, size) => {
     const mw = windowManager.mainWindow;
     if (!mw || mw.isDestroyed()) return;
@@ -83,6 +83,45 @@ function registerIpcHandlers({ agentManager, sessionPids, windowManager, debugLo
     const newX = Math.max(wa.x, Math.min(x, wa.x + wa.width - newWidth));
     mw.setBounds({ x: newX, y: newY, width: newWidth, height: newHeight });
     debugLog(`[Main] Resize → ${newWidth}x${newHeight}`);
+  });
+
+  // Temporarily expand window height upward to fit vertical permission bubbles
+  ipcMain.on('expand-for-permission', (e, opts) => {
+    const mw = windowManager.mainWindow;
+    if (!mw || mw.isDestroyed()) return;
+    if (mw._permBounds) return; // already expanded
+    const b = mw.getBounds();
+    mw._permBounds = b;
+    const wa = screen.getDisplayMatching(b).bounds;
+    const extraH = (opts && opts.extraH) || 90;
+    const newH = b.height + extraH;
+    const newY = Math.max(wa.y, b.y - extraH); // grow upward
+    mw.setBounds({ x: b.x, y: newY, width: b.width, height: newH });
+  });
+
+  ipcMain.on('permission-decision', (e, { sessionId, decision }) => {
+    const pending = pendingPermissions && pendingPermissions.get(sessionId);
+    if (!pending) { debugLog(`[Permission] No pending response for ${sessionId.slice(0, 8)}`); return; }
+    clearTimeout(pending.timer);
+    pendingPermissions.delete(sessionId);
+    if (!pending.res.writableEnded) {
+      pending.res.writeHead(200, { 'Content-Type': 'application/json' });
+      const body = {
+        hookSpecificOutput: {
+          hookEventName: 'PermissionRequest',
+          decision: { behavior: decision === 'deny' ? 'deny' : 'allow' }
+        }
+      };
+      pending.res.end(JSON.stringify(body));
+      debugLog(`[Permission] Decision sent: ${decision} for ${sessionId.slice(0, 8)}`);
+    }
+  });
+
+  ipcMain.on('restore-from-permission', () => {
+    const mw = windowManager.mainWindow;
+    if (!mw || mw.isDestroyed() || !mw._permBounds) return;
+    mw.setBounds(mw._permBounds);
+    mw._permBounds = null;
   });
 
   ipcMain.on('get-avatars', (event) => {

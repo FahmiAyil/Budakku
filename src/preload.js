@@ -28,6 +28,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Sound events
   onPlaySound: (cb) => safeOn('play-sound', cb),
 
+  // Permission popup
+  onShowPermissionPopup: (cb) => safeOn('show-permission-popup', cb),
+  onHidePermissionPopup: (cb) => safeOn('hide-permission-popup', cb),
+  expandForPermission: (extraH) => ipcRenderer.send('expand-for-permission', { extraH }),
+  restoreFromPermission: () => ipcRenderer.send('restore-from-permission'),
+  sendPermissionDecision: (sessionId, decision) => ipcRenderer.send('permission-decision', { sessionId, decision }),
+
   // Error events
   onErrorOccurred: (cb) => safeOn('error-occurred', cb),
 
