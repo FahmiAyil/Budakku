@@ -13,6 +13,7 @@ function createWindowManager({ agentManager, sessionScanner, heatmapScanner, deb
   let keepAliveInterval = null;
   let dashboardServer = null;
   let tray = null;
+  let isQuitting = false;
 
   function resizeWindowForAgents(agentsOrCount) {
     if (!mainWindow || mainWindow.isDestroyed()) return;
@@ -82,9 +83,9 @@ function createWindowManager({ agentManager, sessionScanner, heatmapScanner, deb
       }
     });
 
-    // Minimize to tray on close instead of quitting
+    // Minimize to tray on close instead of quitting (unless quitting intentionally)
     mainWindow.on('close', (e) => {
-      if (tray) {
+      if (tray && !isQuitting) {
         e.preventDefault();
         mainWindow.hide();
       }
@@ -92,6 +93,8 @@ function createWindowManager({ agentManager, sessionScanner, heatmapScanner, deb
 
     startKeepAlive();
     setupTray();
+
+    app.on('before-quit', () => { isQuitting = true; });
   }
 
   function setupTray() {
@@ -118,14 +121,20 @@ function createWindowManager({ agentManager, sessionScanner, heatmapScanner, deb
         label: 'Open Dashboard',
         click: () => {
           if (dashboardWindow && !dashboardWindow.isDestroyed()) {
+            if (dashboardWindow.isMinimized()) dashboardWindow.restore();
             dashboardWindow.focus();
+          } else {
+            createDashboardWindow();
           }
         }
       },
       { type: 'separator' },
       {
         label: 'Quit Budakku',
-        click: () => { app.quit(); }
+        click: () => {
+          isQuitting = true;
+          app.quit();
+        }
       }
     ]);
 
