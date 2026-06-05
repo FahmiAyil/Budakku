@@ -59,3 +59,32 @@ contextBridge.exposeInMainWorld('dashboardAPI', {
   },
 
 });
+
+contextBridge.exposeInMainWorld('dockerAPI', {
+  getConfig: () => ipcRenderer.invoke('docker-get-config'),
+  listDistros: () => ipcRenderer.invoke('docker-list-distros'),
+  saveConfig: (cfg) => ipcRenderer.invoke('docker-save-config', cfg),
+  testConnection: (cfg) => ipcRenderer.invoke('docker-test-connection', cfg),
+  serviceStatus: () => ipcRenderer.invoke('docker-service-status'),
+  serviceStart: () => ipcRenderer.invoke('docker-service-start'),
+  serviceStop: () => ipcRenderer.invoke('docker-service-stop'),
+  listContainers: () => ipcRenderer.invoke('docker-list-containers'),
+  containerAction: (id, action) => ipcRenderer.invoke('docker-container-action', { id, action }),
+  logsStart: (id) => ipcRenderer.invoke('docker-logs-start', { id }),
+  logsStop: (id) => ipcRenderer.invoke('docker-logs-stop', { id }),
+  onLogLine: (cb) => {
+    ipcRenderer.removeAllListeners('docker-log-line');
+    ipcRenderer.on('docker-log-line', (event, data) => cb(data));
+  },
+});
+
+contextBridge.exposeInMainWorld('projectsAPI', {
+  list: () => ipcRenderer.invoke('projects-list'),
+  start: (name, path, command) => ipcRenderer.invoke('projects-start', { name, path, command }),
+  stop: (name) => ipcRenderer.invoke('projects-stop', { name }),
+  getBuffer: (name) => ipcRenderer.invoke('projects-get-buffer', { name }),
+  onLogLine: (cb) => {
+    ipcRenderer.removeAllListeners('projects-log-line');
+    ipcRenderer.on('projects-log-line', (event, data) => cb(data));
+  },
+});

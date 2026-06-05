@@ -31,6 +31,23 @@
           </svg>
           Overview
         </button>
+        <button class="nav-item" data-view="docker">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="8" width="6" height="5" rx="1"></rect>
+            <rect x="9" y="8" width="6" height="5" rx="1"></rect>
+            <rect x="16" y="8" width="6" height="5" rx="1"></rect>
+            <rect x="2" y="14" width="6" height="5" rx="1"></rect>
+            <rect x="9" y="14" width="6" height="5" rx="1"></rect>
+            <path d="M9 8V5M16 8V5M12 5H6M12 5h7" stroke-linecap="round"></path>
+          </svg>
+          Docker
+        </button>
+        <button class="nav-item" data-view="projects">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+          Projects
+        </button>
 
         <div class="nav-label" style="margin-top: 20px">Observe</div>
         <button class="nav-item" data-view="heatmap">
@@ -50,8 +67,16 @@
           </svg>
           Token Usage
         </button>
+
       </nav>
       <div class="sidebar-footer">
+        <button class="nav-item" data-view="settings" style="width:100%;margin-bottom:8px">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          Settings
+        </button>
         <div class="status-dot disconnected" id="statusIndicator"></div>
         <span id="connectionStatus">Connecting Gateway...</span>
         <a class="github-link" href="https://github.com/Budakku/budakku" target="_blank" title="GitHub">
@@ -211,6 +236,15 @@
           </div>
         </div>
 
+        <!-- =================== DOCKER VIEW =================== -->
+        <div id="dockerView" class="view-section"></div>
+
+        <!-- =================== SETTINGS VIEW =================== -->
+        <div id="settingsView" class="view-section"></div>
+
+        <!-- =================== PROJECTS VIEW =================== -->
+        <div id="projectsView" class="view-section"></div>
+
       </div>
     </main>
   </div>
@@ -234,7 +268,10 @@
   <script src="/src/office/office-init.js?v=6"></script>
 
   <!-- Application Logic -->
-  <script src="/public/dashboard.js"></script>
+  <script src="/public/dashboard.js?v=2"></script>
+  <script src="/public/settings-view.js?v=2"></script>
+  <script src="/public/docker-view.js?v=2"></script>
+  <script src="/public/projects-view.js?v=2"></script>
   <script>
     document.getElementById('office-canvas').addEventListener('mousedown', function () {
       if (typeof notificationSound !== 'undefined') notificationSound.unlockAudio();

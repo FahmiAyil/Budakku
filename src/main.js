@@ -23,6 +23,8 @@ const { sessionPids, startLivenessChecker, detectClaudePidByTranscript } = requi
 const { savePersistedState, recoverExistingSessions } = require('./main/sessionPersistence');
 const { createWindowManager } = require('./main/windowManager');
 const { registerIpcHandlers } = require('./main/ipcHandlers');
+const { registerDockerIpc } = require('./main/dockerIpc');
+const { registerProjectsIpc } = require('./main/projectsIpc');
 
 // =====================================================
 // Save error logs to file
@@ -168,6 +170,12 @@ app.whenReady().then(() => {
     errorHandler,
     pendingPermissions,
   });
+
+  // 5b. Register Docker IPC handlers
+  registerDockerIpc(() => windowManager.dashboardWindow);
+
+  // 5c. Register Projects IPC handlers
+  registerProjectsIpc(() => windowManager.dashboardWindow);
 
   // 6. Start background services
   startHookServer({

@@ -600,6 +600,18 @@ document.querySelectorAll('.nav-item').forEach(b => {
 
     if (target === 'heatmap') renderHeatmapView();
     else if (target === 'usage') renderUsageView();
+    else if (target === 'docker') {
+      if (typeof window._renderDockerView === 'function') window._renderDockerView();
+    } else if (target === 'projects') {
+      if (typeof window._stopDockerPolling === 'function') window._stopDockerPolling();
+      if (typeof window._renderProjectsView === 'function') window._renderProjectsView();
+    } else if (target === 'settings') {
+      if (typeof window._stopDockerPolling === 'function') window._stopDockerPolling();
+      if (typeof window._renderSettingsView === 'function') window._renderSettingsView();
+    } else {
+      // Stop docker polling when switching away from docker view
+      if (typeof window._stopDockerPolling === 'function') window._stopDockerPolling();
+    }
   };
 });
 
